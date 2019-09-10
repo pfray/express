@@ -1,0 +1,152 @@
+#cloud-config
+password: P0cP9Cmg
+chpasswd: { expire: False }
+ssh_pwauth: True
+write_files:
+- path: /tmp/opt/pf9-express/pf9-express.conf
+  owner: root:root
+  permissions: '0777'
+  content: |
+      manage_hostname|false
+      manage_resolver|false
+      dns_resolver1|8.8.8.8
+      dns_resolver2|8.8.4.4
+      os_tenant|service
+      du_url|https://nokia-kvm.platform9.net
+      os_username|nakul.desai@nokia.com
+      os_password|P0cP9Cmg!
+      os_region|kvm
+      proxy_url|-
+- path: /tmp/opt/pf9-express/inventory/hosts
+  owner: root:root
+  permissions: '0777'
+  content: |
+      [all]
+      [all:vars]
+      ansible_user=centos
+      ansible_sudo_pass=P0cP9Cmg
+      ansible_ssh_pass=P0cP9Cmg
+      manage_network=True
+      bond_ifname=bond0
+      bond_mode=1
+      bond_mtu=9000
+      [bond_config]
+      66.201.41.74 bond_members='["eno5","eno6"]' bond_sub_interfaces='[{"vlanid":"100","ip":"10.0.2.74","mask":"255.255.255.0"}]'
+      [pmo:children]
+      hypervisors
+      glance
+      cinder
+      [hypervisors]
+      66.201.41.74 ansible_host=66.201.41.74 vm_console_ip=66.201.41.74 ha_cluster_ip=66.201.41.74 tunnel_ip=10.0.2.74 dhcp=on snat=on
+      [glance]
+      66.201.41.74 glance_ip=10.0.3.74 glance_public_endpoint=True
+      [cinder]
+      [designate]
+      [pmk:children]
+      k8s_master
+      k8s_worker
+      [k8s_master]
+      [k8s_worker]
+- path: /tmp/opt/pf9-express/host_vars/66.201.41.74.yml
+  owner: root:root
+  permissions: '0777'
+  content: |
+      ---
+      physical_device_mappings:
+        - sriov-ext1:eno5
+        - sriov-ext1:eno6
+      sriov_numvfs:
+        - eno5:8
+        - eno6:8
+- path: /usr/local/bin/runOnce.sh
+  owner: root:root
+  permissions: '0777'
+  content: |
+      #!/bin/bash
+      #
+      # Run this file from service after reboot
+      cd /opt/pf9-express
+      ./pf9-express -a all && rm /var/tmp/runOnce.on-next-reboot
+      exit 0
+- path: /usr/local/bin/runFirst.sh
+  owner: root:root
+  permissions: '0777'
+  content: |
+      #!/bin/bash
+      #
+      # Run this file from service after reboot
+      cd /opt/pf9-express
+      ./pf9-express -a all   
+      exit 0    
+- path: /usr/local/bin/ocli-install.sh
+  owner: root:root
+  permissions: '0777'
+  content: |
+      #!/bin/bash
+      #
+      # Run this file from service after reboot
+      source /usr/bin/virtualenvwrapper.sh
+      export WORKON_HOME=$HOME/.virtenvs
+      mkvirtualenv os_cli
+      pip install --upgrade --requirement https://raw.githubusercontent.com/platform9/support-locker/master/openstack-clients/requirements.txt --constraint https://raw.githubusercontent.com/openstack/requirements/stable/pike/upper-constraints.txt
+      exit 0
+- path: /etc/systemd/system/multi-user.target.wants/one-time.service
+  owner: root:root
+  permissions: '0755'
+  content: |
+      [Unit]
+      Description=runOnce.sh
+      
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/bin/runOnce.sh
+      ConditionPathExists=/var/tmp/runOnce.on-next-reboot
+      [Install]
+      WantedBy=multi-user.target
+- path: /tmp/opt/pf9-express/roles/pre-flight-checks-openstack/defaults/main.yml
+  owner: root:root
+  permissions: '0777'
+  content: |
+      ---
+      grub_reboot: false
+      reboot_wait: 900
+package_upgrade: true
+packages:
+  - git
+  - epel-release 
+  - gcc 
+  - openssl-devel 
+  - python-pip 
+  - python-wheel 
+  - python-virtualenv 
+  - python-virtualenvwrapper 
+  - tuned-profiles-cpu-partitioning 
+  - crudini 
+  - ntp 
+  - nginx 
+  - bc 
+  - shade 
+  - docker-py 
+  - ansible
+  - python-devel 
+  - python2-pip
+runcmd:
+- echo "### Git Commands"
+- git clone -b sriov-support https://github.com/platform9/express.git /opt/pf9-express
+- echo "### openstack cli in virtualenv"
+- /usr/local/bin/ocli-install.sh
+- mv /tmp/opt/pf9-express/roles/pre-flight-checks-openstack/defaults/main.yml /opt/pf9-express/roles/pre-flight-checks-openstack/defaults/main.yml
+- mv /tmp/opt/pf9-express/host_vars/66.201.41.74.yml /opt/pf9-express/host_vars/66.201.41.74.yml
+- mv /tmp/opt/pf9-express/inventory/hosts /opt/pf9-express/inventory/hosts
+- mv /tmp/opt/pf9-express/pf9-express.conf /opt/pf9-express/pf9-express.conf
+- echo "### Run pf9-express -i"
+- /opt/pf9-express/pf9-express -i
+- echo "### run pf9-express"
+- touch /var/tmp/runOnce.on-next-reboot
+- /usr/local/bin/runFirst.sh
+power_state:
+  delay: "+5"
+  mode: reboot
+  message: Bye Bye
+  timeout: 30
+  condition: True 
