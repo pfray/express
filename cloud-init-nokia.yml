@@ -12,10 +12,10 @@ write_files:
       dns_resolver1|8.8.8.8
       dns_resolver2|8.8.4.4
       os_tenant|service
-      du_url|https://nokia-kvm.platform9.net
-      os_username|nakul.desai@nokia.com
-      os_password|P0cP9Cmg!
-      os_region|kvm
+      du_url|https://se.platform9.horse
+      os_username|peter@platform9.com
+      os_password|Viper640!
+      os_region|demo
       proxy_url|-
 - path: /tmp/opt/pf9-express/inventory/hosts
   owner: root:root
@@ -31,15 +31,15 @@ write_files:
       bond_mode=1
       bond_mtu=9000
       [bond_config]
-      66.201.41.74 bond_members='["eno5","eno6"]' bond_sub_interfaces='[{"vlanid":"100","ip":"10.0.2.74","mask":"255.255.255.0"}]'
+      10.128.237.202 bond_members='["eno5","eno6"]' bond_sub_interfaces='[{"vlanid":"100","ip":"10.0.2.74","mask":"255.255.255.0"}]'
       [pmo:children]
       hypervisors
       glance
       cinder
       [hypervisors]
-      66.201.41.74 ansible_host=66.201.41.74 vm_console_ip=66.201.41.74 ha_cluster_ip=66.201.41.74 tunnel_ip=10.0.2.74 dhcp=on snat=on
+      10.128.237.202 ansible_host=10.128.237.202 vm_console_ip=10.128.237.202 ha_cluster_ip=10.128.237.202 tunnel_ip=10.0.2.74 dhcp=on snat=on
       [glance]
-      66.201.41.74 glance_ip=10.0.3.74 glance_public_endpoint=True
+      10.128.237.202 glance_ip=10.0.3.74 glance_public_endpoint=True
       [cinder]
       [designate]
       [pmk:children]
@@ -47,7 +47,7 @@ write_files:
       k8s_worker
       [k8s_master]
       [k8s_worker]
-- path: /tmp/opt/pf9-express/host_vars/66.201.41.74.yml
+- path: /tmp/opt/pf9-express/host_vars/10.128.237.202.yml
   owner: root:root
   permissions: '0777'
   content: |
@@ -134,7 +134,7 @@ runcmd:
 - echo "### Git Commands"
 - git clone -b sriov-support https://github.com/pfray/express.git /opt/pf9-express
 - mv /tmp/opt/pf9-express/roles/pre-flight-checks-openstack/defaults/main.yml /opt/pf9-express/roles/pre-flight-checks-openstack/defaults/main.yml
-- mv /tmp/opt/pf9-express/host_vars/66.201.41.74.yml /opt/pf9-express/host_vars/66.201.41.74.yml
+- mv /tmp/opt/pf9-express/host_vars/10.128.237.202.yml /opt/pf9-express/host_vars/10.128.237.202.yml
 - mv /tmp/opt/pf9-express/inventory/hosts /opt/pf9-express/inventory/hosts
 - mv /tmp/opt/pf9-express/pf9-express.conf /opt/pf9-express/pf9-express.conf
 - echo "### Run pf9-express -i"
