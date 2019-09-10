@@ -132,9 +132,7 @@ packages:
   - python2-pip
 runcmd:
 - echo "### Git Commands"
-- git clone -b sriov-support https://github.com/platform9/express.git /opt/pf9-express
-- echo "### openstack cli in virtualenv"
-- /usr/local/bin/ocli-install.sh
+- git clone -b sriov-support https://github.com/pfray/express.git /opt/pf9-express
 - mv /tmp/opt/pf9-express/roles/pre-flight-checks-openstack/defaults/main.yml /opt/pf9-express/roles/pre-flight-checks-openstack/defaults/main.yml
 - mv /tmp/opt/pf9-express/host_vars/66.201.41.74.yml /opt/pf9-express/host_vars/66.201.41.74.yml
 - mv /tmp/opt/pf9-express/inventory/hosts /opt/pf9-express/inventory/hosts
